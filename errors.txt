@@ -1,0 +1,21 @@
+Answer the following questions in a file myalloc/errors.txt
+
+a) Describe what your allocator does in each of the following cases
+
+What happens if myfree() is called on an address that did not originate from myalloc()?
+- This is nonsense as since it did not originate from myalloc(), this address
+does not have a header in the beeginning. Thus, it will try to read the first four bytes of data, interpret that as a size, and try to "free" that. When I say free, I simply mean it will make those four bytes (the header) and another four bytes a distance away (the footer) positive if they were negative and still positive if they were positive. This has no meaning in the context of blocks without headers and footers. 
+
+What happens if a programmer calls myalloc() on an address that is contained within a memory block returned by myalloc()? 
+- This would make no sense because there is no header at this location because
+  since we did not allocate anything there, we did not create a header there. What myalloc will do here instead is read the first four bytes which is garbage data that was used by the program, and interpret that as the size of the block, and try to free that. This leads to freeing either too much or too little, and possibly overwriting part of the next memory block that may be being used to do something. All in all we create a giant mess.
+  
+What happens if a programmer calls myalloc() on an address that is already freed?
+- This won't cause any errors as I am making the header and the footer equal to the absolute value of their previous values, which in this case (since they are already free) won't change their values (their previous values are still positive). Absolutely no errors will occur, but this will just be redundant. 
+
+b) Describe how to make a more robust allocator to deal with these kinds of abuses. 
+
+Let's discuss each type of error and how to fix it.
+For this first type of error, what we could do is check the size given by the header of it (or the value that is signified by the last four bytes), move that much forward, and check the footer value, and if those aren't equal, then we know that this address did not originate from myalloc because if it did then by the header-footer formatting those values would have been equal. So we simply exit out of the program.
+For the second type of error, what we could do is check the size given by the header of this block (4 bytes before the adress location), move that much forward, and check the footer value, and if the header value and the footer value aren't equal, then exit out of the program as we know that we didn't come to the start of a block (our header and footer values did not match so obviously we weren't near the start of a block and the "size" that we read is actually meaningless data). 
+For the third error, we could check if the label is positive, and if it is, exit out as we are freeing a block that is already free. 
